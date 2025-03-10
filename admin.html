@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carbon Choices - Admin Dashboard</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .admin-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: #4CAF50;
+      color: white;
+    }
+    tr:hover {
+      background-color: #f5f5f5;
+    }
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .export-button {
+      background-color: #2196F3;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .export-button:hover {
+      background-color: #0b7dda;
+    }
+    .login-container {
+      max-width: 500px;
+      margin: 100px auto;
+      padding: 2rem;
+      background-color: white;
+      border-radius: 15px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: bold;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 1rem;
+    }
+    .tabs {
+      display: flex;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #ddd;
+    }
+    .tab {
+      padding: 10px 20px;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+    .tab.active {
+      border: 1px solid #ddd;
+      border-bottom: 1px solid white;
+      margin-bottom: -1px;
+      border-radius: 5px 5px 0 0;
+      background-color: #e8f5e9;
+    }
+  </style>
+</head>
+<body>
+  <div id="admin-login" class="login-container">
+    <h1>Admin Login</h1>
+    <div class="form-group">
+      <label for="admin-password">Password</label>
+      <input type="password" id="admin-password" placeholder="Enter admin password">
+    </div>
+    <button id="admin-login-button" class="export-button">Login</button>
+  </div>
+
+  <div id="admin-dashboard" class="admin-container" style="display: none;">
+    <div class="admin-header">
+      <h1>Carbon Choices - Admin Dashboard</h1>
+      <div>
+        <button id="export-csv-button" class="export-button">Export to CSV</button>
+        <button id="export-excel-button" class="export-button" style="margin-left: 10px;">Export to Excel</button>
+        <button id="admin-logout-button" class="export-button" style="margin-left: 10px; background-color: #f44336;">Logout</button>
+      </div>
+    </div>
+    
+    <div class="tabs">
+      <div class="tab active" data-tab="summary">Summary</div>
+      <div class="tab" data-tab="detailed">Detailed Results</div>
+      <div class="tab" data-tab="users">User List</div>
+    </div>
+    
+    <div id="summary-tab" class="tab-content">
+      <h2>Game Statistics</h2>
+      <div id="total-players">Loading statistics...</div>
+      <div id="average-score">Calculating average score...</div>
+      <div id="completion-rate">Calculating completion rate...</div>
+      
+      <h3>Most Common Choices</h3>
+      <div id="common-choices">Analyzing choices...</div>
+      
+      <h3>Challenge Responses</h3>
+      <div id="challenge-stats">Analyzing challenges...</div>
+    </div>
+    
+    <div id="detailed-tab" class="tab-content" style="display: none;">
+      <h2>Detailed Game Results</h2>
+      <table id="results-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Date</th>
+            <th>Final Score</th>
+            <th>Completed</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="results-body">
+          <tr>
+            <td colspan="6">Loading data...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <div id="users-tab" class="tab-content" style="display: none;">
+      <h2>Registered Users</h2>
+      <table id="users-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Registration Date</th>
+            <th>Games Played</th>
+          </tr>
+        </thead>
+        <tbody id="users-body">
+          <tr>
+            <td colspan="4">Loading users...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  
+  <!-- SheetJS (for Excel export) -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
+  
+  <script src="js/firebase.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
