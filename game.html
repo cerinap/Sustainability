@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carbon Choices Game</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+    <div id="user-info" style="position: absolute; top: 10px; right: 20px; text-align: right;">
+      <span id="user-email"></span>
+      <button id="logout-button" style="display: block; margin-top: 5px; padding: 5px 10px; border: none; background-color: #f44336; color: white; border-radius: 5px; cursor: pointer;">Logout</button>
+    </div>
+    
+    <div id="home-screen">
+      <h1>Your Daily Carbon Choices</h1>
+      <p>Make choices throughout your day and see how they impact your carbon footprint.</p>
+      <p>You start with a budget of 50 carbon points. Each choice you make will affect your remaining points.</p>
+      <button class="start-button" id="start-game-button">Start Game</button>
+    </div>
+    
+    <div id="game-screen" style="display: none;">
+      <h1>Your Daily Carbon Choices</h1>
+      <div class="carbon-counter">Carbon Budget: <span id="carbon-points">50</span> points</div>
+      <div class="progress-container">
+        <div id="progress-bar" class="progress-bar" style="width: 0%;"></div>
+      </div>
+      
+      <div id="choice-container" class="choice-container">
+        <!-- Current choice will be displayed here -->
+      </div>
+    </div>
+    
+    <div id="result-screen" class="result-screen">
+      <h2 class="result-title">Your Daily Carbon Impact</h2>
+      <p>You completed all daily choices!</p>
+      <div class="carbon-score">Remaining Carbon Budget: <span id="final-score">0</span> points</div>
+      <p id="impact-message"></p>
+      <button class="restart-button" id="restart-button">Try Again</button>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="js/firebase.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
