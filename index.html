@@ -1,1 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carbon Choices - Login</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .login-container {
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 2rem;
+      background-color: white;
+      border-radius: 15px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .form-group {
+      margin-bottom: 1.5rem;
+      text-align: left;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: bold;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 1rem;
+    }
+    .error-message {
+      color: #d32f2f;
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="login-container">
+      <h1>Your Daily Carbon Choices</h1>
+      <p>Please sign in with your ESCP email to participate in the carbon choices game.</p>
 
+      <div class="form-group">
+        <label for="email">ESCP Email Address</label>
+        <input type="email" id="email" placeholder="name.surname@edu.escp.eu">
+        <div id="email-error" class="error-message">Please enter a valid ESCP email address (name.surname@edu.escp.eu)</div>
+      </div>
+
+      <div class="form-group">
+        <label for="fullName">Full Name</label>
+        <input type="text" id="fullName" placeholder="Your full name">
+        <div id="name-error" class="error-message">Please enter your full name</div>
+      </div>
+
+      <button class="start-button" id="login-button">Login & Start Game</button>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  
+  <script src="js/firebase.js"></script>
+  <script src="js/login.js"></script>
+</body>
+</html>
