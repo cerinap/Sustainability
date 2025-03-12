@@ -142,106 +142,75 @@ function logout() {
   });
 }
 
-// Save game results to Firestore - cross-browser compatible
+// Save game results to Firestore - simplified approach
 async function saveGameResults(gameData) {
   try {
-    const user = auth.currentUser;
-    if (!user) {
-      console.error('No user logged in');
-      return { success: false, error: 'No user logged in' };
+    // Get user info from localStorage
+    const userEmail = localStorage.getItem('userEmail');
+    const fullName = localStorage.getItem('userName');
+    
+    if (!userEmail || !fullName) {
+      console.error('User information not found in localStorage');
+      return { success: false, error: 'User information not found' };
     }
     
-    console.log("Saving game for user:", user.uid);
+    console.log("Saving game for user:", userEmail);
     
-    // Try to get user data from multiple sources
-    let userEmail = '';
-    let fullName = '';
-    
-    // First try: Get from localStorage (most reliable across browsers)
-    userEmail = localStorage.getItem('userEmail');
-    fullName = localStorage.getItem('userName');
-    
-    if (userEmail && fullName) {
-      console.log("Found user data in localStorage:", userEmail, fullName);
-    } else {
-      console.log("User data not found in localStorage, checking other sources");
-      
-      // Second try: Get from sessionStorage
-      try {
-        if (!userEmail && sessionStorage.getItem('userEmail')) {
-          userEmail = sessionStorage.getItem('userEmail');
-          fullName = sessionStorage.getItem('userName');
-          console.log("Found user data in sessionStorage:", userEmail);
-        }
-      } catch (sessionError) {
-        console.error("Error accessing sessionStorage:", sessionError);
-      }
-      
-      // Third try: Get from Firestore
-      if (!userEmail) {
-        try {
-          const userDoc = await db.collection('users').doc(user.uid).get();
-          if (userDoc.exists) {
-            const userData = userDoc.data();
-            userEmail = userData.email;
-            fullName = userData.fullName;
-            console.log("Found user data in Firestore:", userEmail);
-            
-            // Store back in localStorage for future use
-            localStorage.setItem('userEmail', userEmail);
-            localStorage.setItem('userName', fullName);
-          } else {
-            console.warn("User document not found in Firestore");
-          }
-        } catch (userDocError) {
-          console.error("Error fetching user doc:", userDocError);
-        }
-      }
-      
-      // Fourth try: Get from auth user profile
-      if (!userEmail && user.displayName) {
-        fullName = user.displayName;
-        console.log("Using displayName from auth profile:", fullName);
-      }
-      
-      // Last resort: Use default values
-      if (!userEmail) {
-        userEmail = "anonymous@edu.escp.eu";
-        fullName = "ESCP Student";
-        console.log("Using default values for missing user data");
-      }
+    // Generate a unique ID for this user if we don't have one yet
+    let userId = localStorage.getItem('userId');
+    if (!userId) {
+      userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem('userId', userId);
     }
     
-    // Add a new document in the games collection
-    const gameRef = await db.collection('games').add({
-      userId: user.uid,
-      userEmail: userEmail,
-      fullName: fullName,
-      finalScore: gameData.finalScore,
-      choices: gameData.choices || [],
-      challengeResponses: gameData.challengeResponses || [],
-      playedAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    
-    console.log("Game saved successfully with ID:", gameRef.id);
-    
-    // Try to update or create user document in Firestore
+    // Try to save to Firestore
     try {
-      await db.collection('users').doc(user.uid).set({
+      // First update or create the user document
+      await db.collection('users').doc(userId).set({
         email: userEmail,
         fullName: fullName,
-        lastActive: firebase.firestore.FieldValue.serverTimestamp()
+        lastActive: firebase.firestore.FieldValue.serverTimestamp(),
+        registeredAt: firebase.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
-      console.log("Updated user document in Firestore");
-    } catch (updateError) {
-      console.error("Error updating user document (non-critical):", updateError);
-      // This is non-critical since we already saved the game data
+      
+      // Then save the game data
+      const gameRef = await db.collection('games').add({
+        userId: userId,
+        userEmail: userEmail,
+        fullName: fullName,
+        finalScore: gameData.finalScore,
+        choices: gameData.choices || [],
+        challengeResponses: gameData.challengeResponses || [],
+        playedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      
+      console.log("Game saved successfully with ID:", gameRef.id);
+      return { success: true };
+    } catch (firestoreError) {
+      console.error('Error saving to Firestore:', firestoreError);
+      
+      // If Firestore fails, save to localStorage as fallback
+      let savedGames = JSON.parse(localStorage.getItem('savedGames') || '[]');
+      
+      const gameToSave = {
+        id: 'local_' + Date.now(),
+        userId: userId,
+        userEmail: userEmail,
+        fullName: fullName,
+        finalScore: gameData.finalScore,
+        choices: gameData.choices || [],
+        challengeResponses: gameData.challengeResponses || [],
+        playedAt: new Date().toISOString()
+      };
+      
+      savedGames.push(gameToSave);
+      localStorage.setItem('savedGames', JSON.stringify(savedGames));
+      
+      console.log("Game saved to localStorage as fallback");
+      return { success: true, localOnly: true };
     }
-    
-    return { success: true };
   } catch (error) {
-    console.error('Error saving game results:', error);
+    console.error('Error in saveGameResults:', error);
     return { success: false, error: error.message };
   }
 }
-      
