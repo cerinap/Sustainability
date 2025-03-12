@@ -1,35 +1,3 @@
-// Check if user is logged in via localStorage
-function checkLoggedIn() {
-  if (!localStorage.getItem('userLoggedIn') || localStorage.getItem('userLoggedIn') !== 'true') {
-    window.location.href = 'index.html';
-    return false;
-  }
-  return true;
-}
-
-// Set user email in the UI
-function displayUserInfo() {
-  const userEmail = localStorage.getItem('userEmail');
-  if (userEmail) {
-    document.getElementById('user-email').textContent = userEmail;
-  }
-}
-
-// Handle logout
-document.getElementById('logout-button').addEventListener('click', function() {
-  localStorage.removeItem('userEmail');
-  localStorage.removeItem('userName');
-  localStorage.removeItem('userLoggedIn');
-  window.location.href = 'index.html';
-});
-
-// Check login status on page load
-if (!checkLoggedIn()) {
-  // This will redirect if not logged in
-} else {
-  displayUserInfo();
-}
-
 $(document).ready(function() {
   // Display logged in user info
   auth.onAuthStateChanged(user => {
@@ -65,7 +33,7 @@ $(document).ready(function() {
         { text: "Turning Off Tap While Brushing Teeth", points: 0 }
       ]
     },
-{
+    {
       section: "🌅 Morning Routine",
       title: "☕ Beverage Choices",
       options: [
@@ -223,6 +191,7 @@ $(document).ready(function() {
 
   // Start game button click handler
   $("#start-game-button").click(function() {
+    console.log("Start button clicked");
     $("#home-screen").hide();
     initGame();
   });
@@ -238,6 +207,7 @@ $(document).ready(function() {
 
   // Initialize the game
   function initGame() {
+    console.log("Initializing game");
     currentScore = 50;
     currentChoiceIndex = 0;
     previousSection = "";
