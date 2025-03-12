@@ -89,22 +89,57 @@ async function saveGameResults(gameData) {
       return { success: false, error: 'No user logged in' };
     }
     
-    // Get user details
-    const userDoc = await db.collection('users').doc(user.uid).get();
-    const userData = userDoc.data();
+    console.log("Current user:", user.uid);
     
-    // Add a new document in the games collection
-    await db.collection('games').add({
-      userId: user.uid,
-      userEmail: userData.email,
-      fullName: userData.fullName,
-      finalScore: gameData.finalScore,
-      choices: gameData.choices,
-      challengeResponses: gameData.challengeResponses || [],
-      playedAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    
-    return { success: true };
+    // Try to get user details
+    try {
+      const userDoc = await db.collection('users').doc(user.uid).get();
+      
+      let userData = null;
+      
+      // Check if user document exists
+      if (userDoc.exists) {
+        userData = userDoc.data();
+        console.log("Found user data:", userData);
+      } else {
+        console.log("User document doesn't exist, using default values");
+        // If no user document exists, use default values
+        userData = {
+          email: "anonymous@example.com",
+          fullName: "Anonymous User"
+        };
+      }
+      
+      // Add a new document in the games collection
+      console.log("Saving game results with score:", gameData.finalScore);
+      const gameRef = await db.collection('games').add({
+        userId: user.uid,
+        userEmail: userData.email || "anonymous@example.com",
+        fullName: userData.fullName || "Anonymous User",
+        finalScore: gameData.finalScore,
+        choices: gameData.choices || [],
+        challengeResponses: gameData.challengeResponses || [],
+        playedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      
+      console.log("Game data saved with ID:", gameRef.id);
+      return { success: true };
+    } catch (userError) {
+      console.error("Error getting user data:", userError);
+      
+      // Even if we can't get user data, still try to save the game results
+      console.log("Saving game results without user data");
+      const gameRef = await db.collection('games').add({
+        userId: user.uid,
+        finalScore: gameData.finalScore,
+        choices: gameData.choices || [],
+        challengeResponses: gameData.challengeResponses || [],
+        playedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      
+      console.log("Game data saved with ID:", gameRef.id);
+      return { success: true };
+    }
   } catch (error) {
     console.error('Error saving game results:', error);
     return { success: false, error: error.message };
