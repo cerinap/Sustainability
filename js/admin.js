@@ -255,54 +255,103 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   
-  // Load users
-  async function loadUsers() {
-    try {
-      const tbody = document.getElementById('users-body');
-      tbody.innerHTML = '<tr><td colspan="4">Loading users...</td></tr>';
+// Load users
+async function loadUsers() {
+  try {
+    const tbody = document.getElementById('users-body');
+    tbody.innerHTML = '<tr><td colspan="4">Loading users...</td></tr>';
+    
+    // First get all users from the users collection
+    const usersSnapshot = await db.collection('users').orderBy('registeredAt', 'desc').get();
+    
+    if (usersSnapshot.empty) {
+      // Try to get users from games collection if users collection is empty
+      const gamesSnapshot = await db.collection('games').get();
       
-      const usersSnapshot = await db.collection('users').orderBy('registeredAt', 'desc').get();
-      if (usersSnapshot.empty) {
+      if (gamesSnapshot.empty) {
         tbody.innerHTML = '<tr><td colspan="4">No users found</td></tr>';
         return;
       }
       
-      // Get game counts by user
-      const gamesSnapshot = await db.collection('games').get();
-      const gameCountsByUser = {};
+      // Extract unique users from games collection
+      const userMap = new Map();
       gamesSnapshot.forEach(doc => {
         const game = doc.data();
-        if (game.userId) {
-          if (!gameCountsByUser[game.userId]) {
-            gameCountsByUser[game.userId] = 0;
-          }
-          gameCountsByUser[game.userId]++;
+        if (game.userId && game.userEmail && !userMap.has(game.userId)) {
+          userMap.set(game.userId, {
+            userId: game.userId,
+            email: game.userEmail,
+            fullName: game.fullName || 'Unknown User',
+            registeredAt: game.playedAt || null,
+            gamesPlayed: 1
+          });
+        } else if (game.userId && userMap.has(game.userId)) {
+          // Increment games played count
+          const userData = userMap.get(game.userId);
+          userData.gamesPlayed++;
+          userMap.set(game.userId, userData);
         }
       });
       
+      if (userMap.size === 0) {
+        tbody.innerHTML = '<tr><td colspan="4">No users found</td></tr>';
+        return;
+      }
+      
       let html = '';
-      usersSnapshot.forEach(doc => {
-        const user = doc.data();
+      userMap.forEach(user => {
         const date = user.registeredAt ? user.registeredAt.toDate().toLocaleString() : 'N/A';
-        const gamesPlayed = gameCountsByUser[doc.id] || 0;
         
         html += `
         <tr>
-          <td>${user.fullName || 'N/A'}</td>
+          <td>${user.fullName || 'Unknown User'}</td>
           <td>${user.email || 'N/A'}</td>
           <td>${date}</td>
-          <td>${gamesPlayed}</td>
+          <td>${user.gamesPlayed}</td>
         </tr>
         `;
       });
       
       tbody.innerHTML = html;
-      
-    } catch (error) {
-      console.error('Error loading users:', error);
-      document.getElementById('users-body').innerHTML = '<tr><td colspan="4">Error loading users</td></tr>';
+      return;
     }
+    
+    // Get game counts by user
+    const gamesSnapshot = await db.collection('games').get();
+    const gameCountsByUser = {};
+    gamesSnapshot.forEach(doc => {
+      const game = doc.data();
+      if (game.userId) {
+        if (!gameCountsByUser[game.userId]) {
+          gameCountsByUser[game.userId] = 0;
+        }
+        gameCountsByUser[game.userId]++;
+      }
+    });
+    
+    let html = '';
+    usersSnapshot.forEach(doc => {
+      const user = doc.data();
+      const date = user.registeredAt ? user.registeredAt.toDate().toLocaleString() : 'N/A';
+      const gamesPlayed = gameCountsByUser[doc.id] || 0;
+      
+      html += `
+      <tr>
+        <td>${user.fullName || 'N/A'}</td>
+        <td>${user.email || 'N/A'}</td>
+        <td>${date}</td>
+        <td>${gamesPlayed}</td>
+      </tr>
+      `;
+    });
+    
+    tbody.innerHTML = html;
+    
+  } catch (error) {
+    console.error('Error loading users:', error);
+    document.getElementById('users-body').innerHTML = '<tr><td colspan="4">Error loading users</td></tr>';
   }
+}
   
   // View game details
   async function viewGameDetails(gameId) {
