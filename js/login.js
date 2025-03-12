@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const nameError = document.getElementById('name-error');
 
   // Handle login button click
-  loginButton.addEventListener('click', async function() {
+  loginButton.addEventListener('click', function() {
     // Reset error messages
     emailError.style.display = 'none';
     nameError.style.display = 'none';
@@ -22,26 +22,21 @@ document.addEventListener('DOMContentLoaded', function() {
       hasError = true;
     }
     
-    if (!isValidESCPEmail(email)) {
+    // Check for ESCP email format - simplified pattern
+    if (!email.endsWith('@edu.escp.eu') || email.indexOf('.') === -1) {
       emailError.style.display = 'block';
       hasError = true;
     }
     
     if (hasError) return;
     
-    // Disable button during login
-    loginButton.disabled = true;
-    loginButton.textContent = 'Logging in...';
+    // Store user info in localStorage
+    localStorage.setItem('userEmail', email);
+    localStorage.setItem('userName', fullName);
+    localStorage.setItem('userLoggedIn', 'true');
+    localStorage.setItem('loginTime', new Date().toISOString());
     
-    // Login with email
-    const result = await loginWithEmail(email, fullName);
-    
-    if (result.success) {
-      // Redirect to game page happens automatically through auth state observer
-    } else {
-      alert('Error logging in: ' + result.error);
-      loginButton.disabled = false;
-      loginButton.textContent = 'Login & Start Game';
-    }
+    // Redirect to game
+    window.location.href = 'game.html';
   });
 });
