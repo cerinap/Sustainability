@@ -1,20 +1,30 @@
 $(document).ready(function() {
-  // Display logged in user info
-  auth.onAuthStateChanged(user => {
-    if (user) {
-      db.collection('users').doc(user.uid).get().then((doc) => {
-        if (doc.exists) {
-          document.getElementById('user-email').textContent = doc.data().email;
-        }
-      });
-    }
-  });
+  // Check if auth exists before using it
+  if (typeof auth !== 'undefined') {
+    // Auth exists, proceed with auth-related code
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        db.collection('users').doc(user.uid).get().then((doc) => {
+          if (doc.exists) {
+            document.getElementById('user-email').textContent = doc.data().email;
+          }
+        });
+      }
+    });
+  } else {
+    console.warn("Auth is not defined, skipping authentication checks");
+  }
 
   // Logout functionality
-  document.getElementById('logout-button').addEventListener('click', function() {
+// Logout functionality
+document.getElementById('logout-button').addEventListener('click', function() {
+  if (typeof logout === 'function') {
     logout();
-  });
-
+  } else {
+    console.warn("Logout function not defined");
+    window.location.href = 'index.html';
+  }
+});
   // All choices data
   const choices = [
     {
