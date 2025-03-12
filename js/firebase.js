@@ -41,9 +41,13 @@ function checkAuthState() {
 // Call the function to check auth state
 checkAuthState();
 
-// Function to validate ESCP email
+// Function to validate ESCP email with more flexibility
 function isValidESCPEmail(email) {
-  const escpPattern = /^[a-zA-Z]+\.[a-zA-Z]+@edu\.escp\.eu$/;
+  // This pattern allows for more flexible naming conventions:
+  // - Any characters before the @ symbol
+  // - Must contain at least one dot
+  // - Must end with @edu.escp.eu
+  const escpPattern = /^.+\..+@edu\.escp\.eu$/;
   return escpPattern.test(email);
 }
 
