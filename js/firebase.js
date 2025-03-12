@@ -50,20 +50,35 @@ function isValidESCPEmail(email) {
 // Anonymous authentication with custom user data
 async function loginWithEmail(email, fullName) {
   if (!isValidESCPEmail(email)) {
+    console.error("Invalid email format:", email);
     return { success: false, error: 'Invalid ESCP email format' };
   }
   
   try {
+    console.log("Attempting to sign in anonymously for:", email);
+    
     // Sign in anonymously (no password required)
     const result = await auth.signInAnonymously();
+    console.log("Anonymous sign-in successful, UID:", result.user.uid);
     
-    // Store user data in Firestore
+    // Store user data in Firestore - CRITICAL STEP
+    console.log("Storing user data in 'users' collection for:", email);
     await db.collection('users').doc(result.user.uid).set({
       email: email,
       fullName: fullName,
       registeredAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     
+    // IMPORTANT: Also store this information in the auth user profile
+    await result.user.updateProfile({
+      displayName: fullName
+    });
+    
+    // Store the email in localStorage as backup
+    localStorage.setItem('userEmail', email);
+    localStorage.setItem('userName', fullName);
+    
+    console.log("User data successfully stored");
     return { success: true };
   } catch (error) {
     console.error('Error during login:', error);
@@ -89,59 +104,72 @@ async function saveGameResults(gameData) {
       return { success: false, error: 'No user logged in' };
     }
     
-    console.log("Current user:", user.uid);
+    console.log("Saving game for user:", user.uid);
     
-    // Try to get user details
+    // Try to get user data from multiple sources
+    let userEmail = '';
+    let fullName = '';
+    
+    // First try: Get from Firestore
     try {
       const userDoc = await db.collection('users').doc(user.uid).get();
-      
-      let userData = null;
-      
-      // Check if user document exists
       if (userDoc.exists) {
-        userData = userDoc.data();
-        console.log("Found user data:", userData);
+        const userData = userDoc.data();
+        userEmail = userData.email;
+        fullName = userData.fullName;
+        console.log("Found user data in Firestore:", userEmail);
       } else {
-        console.log("User document doesn't exist, using default values");
-        // If no user document exists, use default values
-        userData = {
-          email: "anonymous@example.com",
-          fullName: "Anonymous User"
-        };
+        console.warn("User document not found in Firestore");
       }
-      
-      // Add a new document in the games collection
-      console.log("Saving game results with score:", gameData.finalScore);
-      const gameRef = await db.collection('games').add({
-        userId: user.uid,
-        userEmail: userData.email || "anonymous@example.com",
-        fullName: userData.fullName || "Anonymous User",
-        finalScore: gameData.finalScore,
-        choices: gameData.choices || [],
-        challengeResponses: gameData.challengeResponses || [],
-        playedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      
-      console.log("Game data saved with ID:", gameRef.id);
-      return { success: true };
-    } catch (userError) {
-      console.error("Error getting user data:", userError);
-      
-      // Even if we can't get user data, still try to save the game results
-      console.log("Saving game results without user data");
-      const gameRef = await db.collection('games').add({
-        userId: user.uid,
-        finalScore: gameData.finalScore,
-        choices: gameData.choices || [],
-        challengeResponses: gameData.challengeResponses || [],
-        playedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      
-      console.log("Game data saved with ID:", gameRef.id);
-      return { success: true };
+    } catch (userDocError) {
+      console.error("Error fetching user doc:", userDocError);
     }
+    
+    // Second try: Get from auth user profile
+    if (!userEmail && user.displayName) {
+      fullName = user.displayName;
+      console.log("Using displayName from auth profile:", fullName);
+    }
+    
+    // Third try: Get from localStorage
+    if (!userEmail) {
+      userEmail = localStorage.getItem('userEmail');
+      fullName = localStorage.getItem('userName');
+      console.log("Using data from localStorage:", userEmail);
+    }
+    
+    // Last resort: Use default values
+    if (!userEmail) {
+      userEmail = "unknown@edu.escp.eu";
+      fullName = "ESCP Student";
+      console.log("Using default values for missing user data");
+    }
+    
+    // Save or re-save user data to ensure it exists
+    await db.collection('users').doc(user.uid).set({
+      email: userEmail,
+      fullName: fullName,
+      registeredAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    
+    console.log("Saving game with user data:", userEmail, fullName);
+    
+    // Add a new document in the games collection
+    const gameRef = await db.collection('games').add({
+      userId: user.uid,
+      userEmail: userEmail,
+      fullName: fullName,
+      finalScore: gameData.finalScore,
+      choices: gameData.choices || [],
+      challengeResponses: gameData.challengeResponses || [],
+      playedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
+    console.log("Game saved successfully with ID:", gameRef.id);
+    return { success: true };
   } catch (error) {
     console.error('Error saving game results:', error);
     return { success: false, error: error.message };
   }
 }
+      
