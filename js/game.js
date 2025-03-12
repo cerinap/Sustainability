@@ -1,30 +1,22 @@
 $(document).ready(function() {
-  // Check if auth exists before using it
-  if (typeof auth !== 'undefined') {
-    // Auth exists, proceed with auth-related code
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        db.collection('users').doc(user.uid).get().then((doc) => {
-          if (doc.exists) {
-            document.getElementById('user-email').textContent = doc.data().email;
-          }
-        });
-      }
-    });
-  } else {
-    console.warn("Auth is not defined, skipping authentication checks");
+  // Use localStorage for user info instead of auth
+  const userEmail = localStorage.getItem('userEmail');
+  if (userEmail) {
+    document.getElementById('user-email').textContent = userEmail;
   }
 
-  // Logout functionality
-// Logout functionality
-document.getElementById('logout-button').addEventListener('click', function() {
-  if (typeof logout === 'function') {
-    logout();
-  } else {
-    console.warn("Logout function not defined");
+  // Logout button handler
+  document.getElementById('logout-button').addEventListener('click', function() {
+    // Clear localStorage
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userLoggedIn');
+    
+    // Redirect to login page
     window.location.href = 'index.html';
-  }
-});
+  });
+
   // All choices data
   const choices = [
     {
